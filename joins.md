@@ -1,32 +1,30 @@
 # Guide to Performing Joins in DuckDB
 
-DuckDB provides a rich set of functionalities to perform joins between tables or relations. This guide explains the various types of joins with examples, including the use of the `USING` clause for multi-column joins.
+DuckDB provides a rich set of functionalities to perform joins between tables or relations. This guide explains the various types of joins with examples, including the use of multi-column joins.
 
-## Setting Up
-Before performing joins, we need to create a DuckDB connection and define the data we want to work with. Here, we use `SELECT` statements with `UNION ALL` to structure the data.
+## Getting Started with Relations
+DuckDB allows various ways to define relations:
 
-```python
-import duckdb
+1. **Querying an existing database or file:**
+   ```python
+   rel = con.query("SELECT * FROM my_table")
+   ```
 
-# Create an in-memory DuckDB database
-con = duckdb.connect()
+2. **Using inline data with `VALUES` clauses:**
+   ```python
+   rel = con.query(
+       """
+       SELECT 1 AS id, 'A' AS value, '2023-01-01' AS date UNION ALL
+       SELECT 2, 'B', '2023-01-02' UNION ALL
+       SELECT 3, 'C', '2023-01-03'
+       """
+   )
+   ```
 
-# Define relations
-rel1 = con.query(
-    """
-    SELECT 1 AS id, 'A' AS value, '2023-01-01' AS date UNION ALL
-    SELECT 2, 'B', '2023-01-02' UNION ALL
-    SELECT 3, 'C', '2023-01-03'
-    """
-)
-rel2 = con.query(
-    """
-    SELECT 1 AS id, 'X' AS value, '2023-01-01' AS date UNION ALL
-    SELECT 2, 'Y', '2023-01-02' UNION ALL
-    SELECT 4, 'Z', '2023-01-04'
-    """
-)
-```
+3. **Loading data from files (CSV, Parquet, etc.):**
+   ```python
+   rel = con.from_csv_auto("data.csv")
+   ```
 
 ## Types of Joins
 
@@ -94,7 +92,7 @@ Every row from `rel1` is combined with every row from `rel2`.
 An anti join returns rows from the left relation that do not have a match in the right relation.
 
 ```python
-anti_join_result = rel1.join(rel2.select('id', 'date'), "id, date", how='anti')
+anti_join_result = rel1.join(rel2, "id, date", how='anti')
 print("\nAnti Join Result:")
 print(anti_join_result)
 ```
@@ -106,7 +104,7 @@ Only rows from `rel1` without a matching `id` and `date` in `rel2` are included.
 A semi join returns rows from the left relation that have a match in the right relation. Unlike an inner join, it does not include columns from the right relation.
 
 ```python
-semi_join_result = rel1.join(rel2.select('id', 'date'), "id, date", how='inner')
+semi_join_result = rel1.join(rel2, "id, date", how='semi')
 print("\nSemi Join Result:")
 print(semi_join_result)
 ```
